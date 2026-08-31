@@ -4,7 +4,7 @@ from ai.intent import detect_intent
 
 GREETINGS = {
     "en": "Hello, you are connected to NOVA. How can I help with your appointment?",
-    "hi": "Namaste, aap NOVA se connected hain. Main aapki appointment mein kaise madad kar sakta hoon?",
+    "hi": "नमस्ते, आप NOVA से जुड़े हैं। मैं आपकी appointment में कैसे मदद कर सकता हूँ?",
 }
 
 MESSAGES = {
@@ -15,10 +15,10 @@ MESSAGES = {
         "availability": "I can check available appointment slots.",
     },
     "hi": {
-        "book": "Main aapki appointment book karne mein madad kar sakta hoon.",
-        "cancel": "Main aapki appointment cancel karne mein madad kar sakta hoon.",
-        "reschedule": "Main aapki appointment ki date ya time badalne mein madad kar sakta hoon.",
-        "availability": "Main available appointment slots check kar sakta hoon.",
+        "book": "मैं आपकी appointment book करने में मदद कर सकता हूँ।",
+        "cancel": "मैं आपकी appointment cancel करने में मदद कर सकता हूँ।",
+        "reschedule": "मैं आपकी appointment की तारीख या समय बदलने में मदद कर सकता हूँ।",
+        "availability": "मैं available appointment slots check कर सकता हूँ।",
     },
 }
 
@@ -55,7 +55,7 @@ def twilio_greeting(language: str = "en") -> str:
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         f'<Response><Gather input="speech" method="POST" action="/voice/twilio/speech" '
-        f'language="{twilio_language}" speechTimeout="auto">'
+        f'language="{twilio_language}" speechTimeout="3">'
         f'<Say language="{twilio_language}">{prompt}</Say></Gather>'
         f'<Say language="{twilio_language}">Goodbye.</Say></Response>'
     )
