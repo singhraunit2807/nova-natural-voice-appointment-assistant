@@ -21,7 +21,7 @@ I added a multilingual language layer while keeping the existing deterministic s
 
 The core scheduling rules were deliberately left unchanged. The language layer translates different ways of expressing the same scheduling intent into the same internal actions, so booking validation and appointment state changes continue to use the existing deterministic code path.
 
-Twilio's `<Gather>` supports a `language` attribute for speech recognition, including `hi-IN` for Hindi, which makes the voice transport compatible with this improvement. citehttps://www.twilio.com/docs/voice/twiml/gather
+Twilio's `<Gather>` supports a `language` attribute for speech recognition, including `hi-IN` for Hindi. Reference: https://www.twilio.com/docs/voice/twiml/gather
 
 ## 3. What came of it
 
