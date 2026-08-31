@@ -11,7 +11,7 @@ from routes.appointments import book, cancel, reschedule
 from scheduling.engine import find_slots
 from voice.twilio_handler import start_call_response, handle_speech, twilio_greeting, twilio_speech_response
 
-app = FastAPI(title="NOVA - Natural Voice Appointment Assistant", version="2.0.0")
+app = FastAPI(title="NOVA - Natural Voice Appointment Assistant", version="2.1.0")
 
 
 class AppointmentRequest(BaseModel):
@@ -43,7 +43,7 @@ def startup() -> None:
 
 @app.get("/")
 def health():
-    return {"name": "NOVA", "status": "ready", "version": "2.0.0"}
+    return {"name": "NOVA", "status": "ready", "version": "2.1.0", "languages": ["en", "hi"]}
 
 
 @app.post("/intent")
@@ -84,22 +84,23 @@ def reschedule_appointment(appointment_id: str, request: RescheduleRequest):
 
 
 @app.post("/voice/start")
-def voice_start():
-    return start_call_response()
+def voice_start(language: str = "en"):
+    return start_call_response(language)
 
 
 @app.post("/voice/speech")
-def voice_speech(text: str):
-    return handle_speech(text)
+def voice_speech(text: str, language: str | None = None):
+    return handle_speech(text, language)
 
 
 @app.post("/voice/twilio")
-def twilio_voice():
-    return Response(content=twilio_greeting(), media_type="application/xml")
+def twilio_voice(language: str = "en"):
+    return Response(content=twilio_greeting(language), media_type="application/xml")
 
 
 @app.post("/voice/twilio/speech")
 async def twilio_speech(request: Request):
     form = await request.form()
     transcript = str(form.get("SpeechResult") or "")
-    return Response(content=twilio_speech_response(transcript), media_type="application/xml")
+    language = str(form.get("Language") or "")
+    return Response(content=twilio_speech_response(transcript, language), media_type="application/xml")
