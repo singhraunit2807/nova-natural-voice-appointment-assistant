@@ -9,6 +9,7 @@ NOVA is a voice-first appointment scheduling assistant. The goal is simple: a ca
 - Reschedules appointments
 - Checks availability and suggests alternative slots
 - Detects common appointment intents from natural-language text
+- Supports English, Hindi, and Hinglish scheduling requests
 - Stores local appointment data in SQLite
 - Exposes a FastAPI backend with interactive API documentation
 - Provides a Twilio-compatible voice/TwiML flow
@@ -65,7 +66,7 @@ Twilio / Voice Adapter
   ↓
 Speech-to-Text
   ↓
-Intent Detection / Llama 4 Scout
+Language + Intent Detection
   ↓
 FastAPI Action Layer
   ↓
@@ -81,6 +82,48 @@ Caller
 ### Important design decision
 
 The AI/intent layer does **not** directly modify appointment state. Booking, cancellation and rescheduling go through deterministic scheduling and validation logic first. This makes the system easier to test and reduces the chance of an AI response changing appointment data incorrectly.
+
+The multilingual improvement follows the same boundary: English, Hindi, and Hinglish requests are mapped to the same internal actions before the deterministic scheduling layer runs.
+
+## Multilingual voice scheduling — v2.1
+
+The voice interface now supports English plus Hindi/Hinglish scheduling requests.
+
+### Supported behavior
+
+- Detects Hindi written in Devanagari.
+- Detects common Hindi/Hinglish phrases such as `mujhe`, `karna hai`, `slot`, `cancel kar`, and `badalna`.
+- Detects booking, cancellation, rescheduling, and availability intents in Hindi/Hinglish.
+- Preserves the existing date (`YYYY-MM-DD`) and time (`HH:MM`) extraction used by the scheduler.
+- Returns a `language` field with the detected intent.
+- Produces language-aware voice responses.
+- Supports `hi-IN` in the Twilio-compatible `<Gather>` flow when Hindi is selected.
+
+### API examples
+
+Hindi intent detection:
+
+```bash
+curl -X POST http://127.0.0.1:8000/intent \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"मुझे डॉक्टर की appointment 2026-09-10 को 10:00 बजे book करनी है"}'
+```
+
+Language-aware voice start:
+
+```text
+POST /voice/start?language=hi
+```
+
+Language-aware speech handling:
+
+```text
+POST /voice/speech?text=mujhe%20doctor%20ki%20appointment%20book%20karni%20hai
+```
+
+The detailed three-beat case study is in `docs/case-study-multilingual-voice-scheduling.md`.
+
+Twilio `<Gather>` language reference: https://www.twilio.com/docs/voice/twiml/gather
 
 ## API examples
 
@@ -128,20 +171,24 @@ The AI/intent layer does **not** directly modify appointment state. Booking, can
 - `GET /appointments` — list active appointments
 - `POST /appointments/{id}/cancel` — cancel an appointment
 - `POST /appointments/{id}/reschedule` — reschedule an appointment
-- `POST /voice/twilio` — start the Twilio-compatible voice flow
+- `POST /voice/start` — start the voice flow; accepts `language=en` or `language=hi`
+- `POST /voice/speech` — handle a transcript; language can be supplied or detected
+- `POST /voice/twilio` — start the Twilio-compatible voice flow; accepts `language=en` or `language=hi`
 - `POST /voice/twilio/speech` — receive the speech callback
 
 ## Evaluation and v2 results
 
-The current repository includes automated tests for intent detection, scheduling conflicts, slot suggestions and API behavior. The project evaluation documentation also records a 15-scenario evaluation covering booking, cancellation, rescheduling, invalid slots, ambiguity, urgency, silence handling and escalation.
+The current repository includes automated tests for intent detection, scheduling conflicts, slot suggestions, API behavior, and the multilingual voice improvement. The project evaluation documentation also records a 15-scenario evaluation covering booking, cancellation, rescheduling, invalid slots, ambiguity, urgency, silence handling and escalation.
 
 The documented project-level evaluation figures are **81% interaction accuracy, 0.86 precision, 0.79 recall and 0.82 F1-score**. These figures are project evaluation results, not production benchmarks.
 
-For the next iteration, the planned v2 improvement is **multilingual voice appointment assistance**, starting with Hindi. The goal is to test whether users can make the same appointment requests naturally in Hindi and whether the existing scheduling validation continues to behave correctly.
+The v2 multilingual improvement was implemented as a focused language-layer change rather than a rewrite of the scheduling core. No production percentage improvement is claimed because the repository does not yet contain a production call-volume experiment.
 
 ## Current limitation
 
 The local repository is a runnable MVP rather than a fully deployed production phone service. A real phone deployment still requires public HTTPS hosting and real Twilio credentials. The external production services are kept behind adapters so they can be connected without rewriting the scheduling core.
+
+The multilingual layer currently covers English, Hindi, and Hinglish. Additional languages can be added by extending the language/intent dictionaries and voice locale mapping without changing the scheduling engine.
 
 ## Demo video
 
